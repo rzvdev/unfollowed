@@ -1,0 +1,4 @@
+*.pyc
+Lib/*
+Scripts/*
+__pycache__/

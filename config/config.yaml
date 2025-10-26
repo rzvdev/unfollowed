@@ -1,0 +1,41 @@
+screen:
+  width: 1920
+  height: 1080
+
+timing:
+  min_action_delay: 2.0        # seconds between actions (inclusive)
+  max_action_delay: 4.5        # seconds between actions (inclusive)
+  cooldown_every: 10           # pause after this many unfollows
+  cooldown_min_seconds: 60     # minimum cooldown duration
+  cooldown_max_seconds: 120    # maximum cooldown duration
+
+limits:
+  actions_per_session: 30      # soft session cap per run
+  daily_cap: 150               # hard cap across sessions per day
+
+vision:
+  templates_dir: data/templates
+  following_button_offset_x: 520
+  following_button_offset_y: 0
+  popup_top_margin: 375
+  popup_left_margin: 540
+  popup_width: 840
+  row_height: 60
+  ocr_match_threshold: 0.65
+  ocr_region:
+    offset_x: 200
+    offset_y: 40
+    width: 180
+    height: 20
+
+safety:
+  block_phrases:
+    - Action blocked
+    - Try again later
+  confirm_template_name: confirm_unfollow.png
+
+logging:
+  directory: logs
+  ensure_exists: true
+  verbose: false
+  debug_capture_rows: true
