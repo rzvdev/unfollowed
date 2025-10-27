@@ -17,16 +17,16 @@ vision:
   templates_dir: data/templates
   following_button_offset_x: 520
   following_button_offset_y: 0
-  popup_top_margin: 375
-  popup_left_margin: 540
-  popup_width: 840
+  popup_top_margin: 400
+  popup_left_margin: 680
+  popup_width: 540
   row_height: 60
   ocr_match_threshold: 0.65
   ocr_region:
-    offset_x: 200
-    offset_y: 40
+    offset_x: 60
+    offset_y: 16
     width: 180
-    height: 20
+    height: 32
 
 safety:
   block_phrases:

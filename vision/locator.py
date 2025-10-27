@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 from typing import Dict, Iterable, Optional, Tuple
 
+import numpy as np
 from PIL import Image
 
 from . import ocr_reader
@@ -52,6 +53,41 @@ def build_geometry(config: Dict[str, Dict[str, int]]) -> PopupGeometry:
         button_offset_x=vision_cfg.get("following_button_offset_x", 520),
         button_offset_y=vision_cfg.get("following_button_offset_y", 0),
     )
+
+def _focus_username_band(region: Image.Image) -> Image.Image:
+    """Return a crop tightly focused on the bright username line."""
+    gray = region.convert("L")
+    arr = np.array(gray)
+    if arr.size == 0:
+        return region
+
+    mask = arr >= 225
+    if not mask.any():
+        mask = arr >= 180
+
+    row_has_text = mask.any(axis=1)
+    indices = np.where(row_has_text)[0]
+    if indices.size == 0:
+        return region
+
+    top = int(indices[0])
+    gap_after = np.where(~row_has_text[top:])[0]
+    if gap_after.size > 0:
+        bottom = top + int(gap_after[0]) - 1
+    else:
+        bottom = int(indices[-1])
+
+    max_band = 20
+    bottom = min(bottom, top + max_band - 1, arr.shape[0] - 1)
+
+    margin_top = 2
+    margin_bottom = 4
+    top = max(0, top - margin_top)
+    bottom = min(arr.shape[0] - 1, bottom + margin_bottom)
+
+    if bottom <= top:
+        return region
+    return region.crop((0, top, region.width, bottom + 1))
 
 
 def _iter_rows(geometry: PopupGeometry, screenshot: Image.Image) -> Iterable[Tuple[int, Image.Image]]:
@@ -95,14 +131,15 @@ def _extract_username(
         geometry.ocr_offset_y + geometry.ocr_height,
     )
     username_region = row_image.crop(ocr_box)
-    detected = ocr_reader.read_username(username_region)
+    focused_region = _focus_username_band(username_region)
+    detected = ocr_reader.read_username(focused_region)
 
     if debug_dir:
         label = _sanitize_label(detected)
         prefix = f"{row_top:04d}" if row_top is not None else "row"
         path = debug_dir / f"ocr_{prefix}_{label}.png"
         try:
-            username_region.save(path)
+            focused_region.save(path)
         except OSError:
             pass
 

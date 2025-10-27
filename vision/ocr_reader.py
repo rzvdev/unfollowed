@@ -11,23 +11,22 @@ import re
 from typing import Optional
 
 import pytesseract
-from PIL import Image, ImageEnhance, ImageOps
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
 USERNAME_PATTERN = re.compile(r"[A-Za-z0-9._]+")
 
 
 def _preprocess(image: Image.Image) -> Image.Image:
+    """Lightweight upscale + sharpen to help Tesseract see punctuation."""
     gray = ImageOps.grayscale(image)
-    equalized = ImageOps.equalize(gray)
-    enhanced = ImageEnhance.Contrast(equalized).enhance(2.0)
-    width, height = enhanced.size
+    boosted = ImageOps.autocontrast(gray, cutoff=1)
+
+    width, height = boosted.size
     if width > 0 and height > 0:
-        enhanced = enhanced.resize((width * 3, height * 3), Image.LANCZOS)
-    inverted = ImageOps.invert(enhanced)
-    bbox = inverted.getbbox()
-    if bbox:
-        inverted = inverted.crop(bbox)
-    return inverted
+        boosted = boosted.resize((width * 3, height * 3), Image.LANCZOS)
+
+    contrasted = ImageEnhance.Contrast(boosted).enhance(1.3)
+    return contrasted.filter(ImageFilter.UnsharpMask(radius=1, percent=110, threshold=2))
 
 
 def read_username(image: Image.Image) -> Optional[str]:
